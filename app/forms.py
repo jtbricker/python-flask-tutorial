@@ -41,3 +41,10 @@ class EditForm(FlaskForm):
                  Please choose another one.')
             return False
         return True
+
+class PostForm(FlaskForm):
+    '''
+    Custom form for making a new post
+    '''
+    post = StringField('post', validators=[DataRequired()])
+    

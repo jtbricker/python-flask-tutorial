@@ -18,6 +18,9 @@ virtualenv flask
 ./flask/Scripts/pip install flipflop
 ./flask/Scripts/pip install coverage
 
+## Create necessary file structure
+mkdir tmp
+
 ## Run db creation script
 ./db_create.py
 
