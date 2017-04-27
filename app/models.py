@@ -1,8 +1,12 @@
 """
 This module defines the models for our database
 """
+import sys
 from hashlib import md5
-from app import db
+from app import db, app
+
+enable_search = True
+import flask_whooshalchemy as whooshalchemy
 
 followers = db.Table('followers',
                      db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
@@ -117,10 +121,15 @@ class Post(db.Model):
     """
     This class represents a post made by a user of our app
     """
+    __searchable__ = ['body']
+
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(140))
     timestamp = db.Column(db.DateTime)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __repr__(self):
-        return '<Post %r>' %(self.body)
+        return '<Post %r>' % (self.body)
+
+if enable_search:
+    whooshalchemy.whoosh_index(app, Post)

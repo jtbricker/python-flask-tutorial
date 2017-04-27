@@ -29,3 +29,7 @@ mkdir tmp
 
 ## Apply the migration
 ./db_upgrade.py
+
+## May need to Wipe Posts and Delete the Search Database
+# ./db_purge_posts.py
+# rm -R ./search.db

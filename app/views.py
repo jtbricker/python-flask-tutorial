@@ -2,9 +2,12 @@ from datetime import datetime
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, oid
-from .forms import LoginForm, EditForm, PostForm
+from .forms import LoginForm, EditForm, PostForm, SearchForm
 from .models import User, Post
 from config import POSTS_PER_PAGE
+from whoosh.qparser import QueryParser
+from app import search_ix
+from config import MAX_SEARCH_RESULTS
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
@@ -17,6 +20,10 @@ def index(page=1):
         db.session.add(post)
         db.session.commit()
         flash('Your post is now live!')
+        writer = search_ix.writer()
+        writer.add_document(id=str(post.id), body=post.body)
+        writer.commit()
+        flash('Your post is now indexed!')
         return redirect(url_for('index'))
     posts = g.user.followed_posts().paginate(page, POSTS_PER_PAGE, False)
     return render_template('index.html',
@@ -74,6 +81,7 @@ def before_request():
         g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
         db.session.commit()
+        g.search_form = SearchForm()
 
 @lm.user_loader
 def load_user(id):
@@ -145,6 +153,27 @@ def unfollow(nickname):
     db.session.commit()
     flash('You have stopped following ' + nickname + '.')
     return redirect(url_for('user', nickname=nickname))
+
+@app.route('/search', methods=['POST'])
+@login_required
+def search():
+    if not g.search_form.validate_on_submit():
+        return redirect(url_for('index'))
+    return redirect(url_for('search_results', query=g.search_form.search.data))
+
+@app.route('/search_results/<query>')
+@login_required
+def search_results(query):
+    qp = QueryParser('body', schema=search_ix.schema)
+    q = qp.parse(query)
+    with search_ix.searcher() as s:
+        rs = s.search(q, limit=MAX_SEARCH_RESULTS)
+        results = []
+        for r in rs:
+            results.append(Post.query.get(int(r['id'])))
+    return render_template('search_results.html',
+                           query=query,
+                           results=results)
 
 @app.errorhandler(404)
 def not_found_error(error):

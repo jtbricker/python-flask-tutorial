@@ -3,7 +3,10 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_openid import OpenID
-from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD
+from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, WHOOSH_BASE
+from whoosh.filedb.filestore import FileStorage
+from whoosh.fields import Schema, TEXT, ID
+
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -34,5 +37,18 @@ if not app.debug:
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
     app.logger.info('homedash startup')
+
+search_is_new = False
+if not os.path.exists(WHOOSH_BASE):
+    os.mkdir(WHOOSH_BASE)
+    search_is_new = True
+search_storage = FileStorage(WHOOSH_BASE)
+search_ix = None
+if search_is_new:
+    schema = Schema(id=ID(stored=True), body=TEXT())
+    search_ix = search_storage.create_index(schema)
+else:
+    search_ix = search_storage.open_index()
+
 
 from app import views, models
