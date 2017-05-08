@@ -33,3 +33,7 @@ mkdir tmp
 ## May need to Wipe Posts and Delete the Search Database
 # ./db_purge_posts.py
 # rm -R ./search.db
+
+# Set email username and password as environment variables
+export MAIL_USERNAME=username
+export MAIL_PASSWORD=password 
