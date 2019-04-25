@@ -1,5 +1,3 @@
-#!flask/Scripts/python
-
 """
 This scripts run the migration downgrade on the database
 """

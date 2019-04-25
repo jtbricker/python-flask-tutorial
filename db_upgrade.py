@@ -1,5 +1,3 @@
-#!flask/Scripts/python
-
 """
 This scripts run the migration upgrade on the database
 """
